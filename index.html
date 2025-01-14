@@ -18,11 +18,6 @@
       rel="stylesheet"
     />
     <style>
-      body {
-        width: 100%;
-        margin: 20px auto;
-        background-color: #1b1e21;
-      }
       .loader {
         margin: 85px auto;
         border: 4px solid #343a40;
@@ -42,7 +37,10 @@
       }
     </style>
   </head>
-  <body>
+  <body
+    class="d-flex justify-content-center align-items-start vh-100 bg-[#1b1e21] text-white"
+    style="background-color: #1b1e21"
+  >
     <div class="container">
       <!-- Logo -->
       <img
@@ -85,75 +83,16 @@
             </tr>
           </thead>
           <tbody id="characters-table" class="table-dark" role="rowgroup">
-            <!-- Loader -->
-            <tr class="text-center p-3">
-              <td colspan="4">
-                <div class="loader" id="table-loader"></div>
-              </td>
-            </tr>
             <!-- Dynamic content -->
           </tbody>
         </table>
       </div>
     </div>
-
-    <!-- Bootstrap Modal -->
-    <div
-      class="modal fade"
-      id="homeworldModal"
-      tabindex="-1"
-      aria-labelledby="homeworldModalLabel"
-      aria-describedby="homeworldModalContent"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
-          <div class="modal-header border-secondary">
-            <h4 class="modal-title" id="homeworldModalLabel">Planet Details</h4>
-            <button
-              type="button"
-              class="btn-close btn-close-white"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Name:</strong> <span id="modal-name"></span></p>
-            <p><strong>Climate:</strong> <span id="modal-climate"></span></p>
-            <p><strong>Terrain:</strong> <span id="modal-terrain"></span></p>
-            <p>
-              <strong>Population:</strong> <span id="modal-population"></span>
-            </p>
-          </div>
-          <div class="modal-footer border-secondary">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <script>
-      const EMPTY_MESSAGE_HTML = `
-        <tr>
-          <td colspan="4" class="text-center p-4 text-secondary">
-            No characters found.
-          </td>
-        </tr>
-      `;
-      const LOADER_HTML = `
-        <tr>
-          <td colspan="4">
-            <div class="loader"></div>
-          </td>
-        </tr>
-      `;
-
+      const EMPTY_MESSAGE_HTML =
+        "<tr> <td colspan='4' class='text-center p-4 text-secondary'>No characters found.</td></tr>";
+      const LOADER_HTML =
+        "<tr><td colspan='4'><div class='loader'></div></td></tr>";
       /*
       Debounce function for search
       */
@@ -164,16 +103,14 @@
           timeout = setTimeout(() => callback(...args), delay);
         };
       }
-
       /*
       Artificial delay for clarity
       */
       function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
-
       /*
-      Transform funcs for characters and planets
+      General transform func for characters and planets
       */
       function transformCharacters(character) {
         return {
@@ -183,7 +120,9 @@
           homeworld: character.homeworld,
         };
       }
-
+      /*
+      Transform func for gender that adds a character to the beginning of the string
+      */
       function transformGender(gender) {
         switch (gender) {
           case 'male':
@@ -194,18 +133,18 @@
             return '⚤ Unknown';
         }
       }
-
+      /*
+      Transform func for planets that converts a huge number into a more comprehensible case for all to understand
+      */
       function transformPopulation(population) {
         return Number.isNaN(+population)
           ? 'Unknown'
           : Intl.NumberFormat('en-US').format(population);
       }
-
       /*
-      For caching planets. When we reopen a planet with the button, the request is not sent again.
+      For caching planets. When we reopen a planet with the button, the request is not sent again
       */
       const planetCache = new Map();
-
       /*
       Func on getting characters. Before the request, a loader appears for better UX and an artificial delay appears 
       */
@@ -226,7 +165,6 @@
           toggleLoader(false);
         }
       }
-
       /*
       Func on getting planets. Before the request, a loader appears for better UX and an artificial delay appears.
       Also, if there is a key in the cache that is equal to the request, we pull data from the cache,
@@ -237,19 +175,13 @@
           console.log('Cache data used:', url);
           return planetCache.get(url);
         }
-
         try {
           const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch planet data: ${response.status}`);
-          }
-
           const data = await response.json();
           const transformedData = {
             ...data,
             population: transformPopulation(data.population),
           };
-
           planetCache.set(url, transformedData);
           console.log('Received and cached data:', url);
 
@@ -259,22 +191,28 @@
           throw error;
         }
       }
-
       /*
-      Func for showing modal. It takes the data from the props and pastes it into the html
+      Func for showing popover. It takes the data from the props and pastes it into the html
       */
-      function showModal(content) {
-        document.getElementById('modal-name').textContent = content.name;
-        document.getElementById('modal-climate').textContent = content.climate;
-        document.getElementById('modal-terrain').textContent = content.terrain;
-        document.getElementById('modal-population').textContent =
-          content.population;
-        const modal = new bootstrap.Modal(
-          document.getElementById('homeworldModal')
-        );
-        modal.show();
-      }
+      function showPopover(button, content) {
+        const popoverContent = `<div><strong>Name:</strong> ${content.name}<br><strong>Climate:</strong> ${content.climate}<br>
+          <strong>Terrain:</strong> ${content.terrain}<br><strong>Population:</strong> ${content.population}</div>`;
 
+        button.setAttribute('data-bs-content', popoverContent);
+        button.setAttribute('title', content.name);
+        button.setAttribute('data-toggle', 'popover');
+        button.setAttribute('data-trigger', 'focus');
+
+        const popoverInstance = bootstrap.Popover.getOrCreateInstance(button, {
+          html: true,
+          trigger: 'focus',
+          delay: { show: 500, hide: 50 },
+          template: `
+          <div class="popover text-white" role="tooltip"><div class="arrow"></div><h3 class="popover-header bg-primary"></h3><div class="popover-body"></div></div>`,
+        });
+
+        popoverInstance.show();
+      }
       /*
       Func for rendering table. It takes the data from the props and pastes it into the html.
       And also adds a button and a handler to it where we can see our interaction with the cache.
@@ -308,15 +246,20 @@
 
           const homeWorldCell = document.createElement('td');
           homeWorldCell.classList.add('w-25');
-          const homeWorldButton = document.createElement('button');
+          /*
+          For proper cross-browser you must use the <a> tag, not the <button> tag,
+          and you also must include a tabindex attribute.
+          */
+          const homeWorldButton = document.createElement('a');
           homeWorldButton.textContent = 'View details';
           homeWorldButton.classList.add('btn', 'btn-secondary', 'btn-sm');
+          homeWorldButton.tabIndex = 0;
           homeWorldButton.onclick = async () => {
             homeWorldButton.textContent = 'Please wait...';
             homeWorldButton.disabled = true;
             try {
               const homeWorld = await fetchPlanet(character.homeworld);
-              showModal(homeWorld);
+              showPopover(homeWorldButton, homeWorld);
             } catch (error) {
               console.error('Error fetching planet data:', error);
             } finally {
@@ -330,7 +273,6 @@
           tableBody.appendChild(row);
         });
       }
-
       /*
       Func for showing loader.
       */
@@ -342,7 +284,6 @@
           tableBody.innerHTML = '';
         }
       }
-
       /*
       Func for generating characters for reuse.
       */
@@ -361,7 +302,6 @@
 
         return characters;
       }
-
       /*
       Func for initializing the app. The logic for a simple search using debounce is also written here.
       That is, as soon as the user enters the last character the request will be sent to the server 
@@ -395,7 +335,6 @@
           .getElementById('search')
           .addEventListener('input', searchHandler);
       }
-
       /* Initialize the app */
       initialize();
     </script>
