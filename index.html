@@ -23,16 +23,6 @@
         margin: 20px auto;
         background-color: #1b1e21;
       }
-
-      .form-control {
-        background-color: #1d1d23;
-      }
-      .form-control:focus {
-        background-color: #1d1d23;
-      }
-      .form-control::placeholder {
-        color: #878787;
-      }
       .loader {
         margin: 85px auto;
         border: 4px solid #343a40;
@@ -78,16 +68,16 @@
         <input
           type="text"
           id="search"
-          class="form-control text-white w-25 mx-auto mb-4"
+          class="form-control text-black w-25 mx-auto mb-4"
           placeholder="Search by name..."
           aria-label="Search for characters by name"
         />
       </form>
       <!-- Table -->
       <div class="table-responsive">
-        <table role="table" class="table table-bordered">
+        <table role="table" class="table table-striped">
           <thead role="rowgroup" class="table-dark">
-            <tr role="row" class="table-info text-center">
+            <tr role="row" class="text-center">
               <th class="w-25" scope="col">Name</th>
               <th class="w-25" scope="col">Gender</th>
               <th class="w-25" scope="col">Birth Year</th>
@@ -151,7 +141,7 @@
     <script>
       const EMPTY_MESSAGE_HTML = `
         <tr>
-          <td colspan="4" class="text-center text-secondary">
+          <td colspan="4" class="text-center p-4 text-secondary">
             No characters found.
           </td>
         </tr>
@@ -357,8 +347,17 @@
       Func for generating characters for reuse.
       */
       async function generateCharacters() {
+        const generateButton = document.getElementById('generate');
+        const seachInput = document.getElementById('search');
+
+        seachInput.disabled = true;
+        generateButton.disabled = true;
+
         const characters = await fetchCharacters();
         renderTable(characters);
+
+        seachInput.disabled = false;
+        generateButton.disabled = false;
 
         return characters;
       }
@@ -377,15 +376,18 @@
         const searchHandler = debounce(async (event) => {
           const query = event.target.value.toLowerCase();
 
+          const generateButton = document.getElementById('generate');
+          generateButton.disabled = true;
+
           const tableBody = document.getElementById('characters-table');
           tableBody.innerHTML = LOADER_HTML;
 
           await sleep(1000);
-
           const filteredCharacters = characters.filter((character) =>
             character.name.toLowerCase().includes(query)
           );
 
+          generateButton.disabled = false;
           renderTable(filteredCharacters);
         }, 500);
 
